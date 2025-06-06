@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Board Game</title>
+    <style>
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+            gap: 1px;
+            background-color: #000;
+        }
+        .square {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .square.player1 { background-color: #ddd; }
+        .square.player2 { background-color: #bbb; }
+        .square.valid-move { background-color: #afa; }
+        .square.red::after { content: 'R'; color: red; }
+        .square.green::after { content: 'G'; color: green; }
+        .square.blue::after { content: 'B'; color: blue; }
+        .action-bar { margin-top: 10px; }
+        .action-bar button { margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <script src="game-logic.js"></script>
+    <script src="game-ui.js"></script>
+    <script src="main-game.js"></script>
+</body>
+</html>
