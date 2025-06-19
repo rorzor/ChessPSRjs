@@ -3,40 +3,645 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Board Game</title>
+    <title>Strategic Board Game</title>
     <style>
-        .board {
-            display: grid;
-            grid-template-columns: repeat(8, 50px);
-            grid-template-rows: repeat(8, 50px);
-            gap: 1px;
-            background-color: #000;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .square {
-            width: 50px;
-            height: 50px;
-            background-color: #fff;
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            color: #333;
+        }
+
+        .game-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .player-info {
+            background: linear-gradient(145deg, #f8faff, #e2e8f0);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .player-info.active {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .current-player {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .action-points {
+            font-size: 16px;
+            color: #718096;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(145deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .identity-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-red {
+            background: linear-gradient(145deg, #f56565, #e53e3e);
+            color: white;
+        }
+
+        .btn-green {
+            background: linear-gradient(145deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .btn-blue {
+            background: linear-gradient(145deg, #4299e1, #3182ce);
+            color: white;
+        }
+
+        .board-container {
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
-            cursor: pointer;
+            padding: 40px;
         }
-        .square.player1 { background-color: #ddd; }
-        .square.player2 { background-color: #bbb; }
-        .square.valid-move { background-color: #afa; }
-        .square.red::after { content: 'R'; color: red; }
-        .square.green::after { content: 'G'; color: green; }
-        .square.blue::after { content: 'B'; color: blue; }
-        .action-bar { margin-top: 10px; }
-        .action-bar button { margin-right: 5px; }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            width: min(70vh, 70vw);
+            height: min(70vh, 70vw);
+        }
+
+        .square {
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .square:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .square.player1 {
+            background: linear-gradient(145deg, #e2e8f0, #cbd5e0);
+            color: #2d3748;
+        }
+
+        .square.player2 {
+            background: linear-gradient(145deg, #a0aec0, #718096);
+            color: #1a202c;
+        }
+
+        .square.valid-move {
+            background: linear-gradient(145deg, #c6f6d5, #9ae6b4) !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .square.red::after {
+            content: 'R';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 16px;
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        .square.green::after {
+            content: 'G';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 16px;
+            color: #38a169;
+            font-weight: bold;
+        }
+
+        .square.blue::after {
+            content: 'B';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 16px;
+            color: #3182ce;
+            font-weight: bold;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #4a5568;
+        }
+
+        .instructions h4 {
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                padding: 20px;
+            }
+            
+            .board-container {
+                padding: 20px;
+            }
+            
+            .board {
+                width: min(80vw, 80vh);
+                height: min(80vw, 80vh);
+            }
+        }
     </style>
 </head>
 <body>
-    <div id="game-container"></div>
+    <div class="game-container">
+        <div class="sidebar">
+            <h1 class="game-title">Strategic Board Game</h1>
+            
+            <div id="player-info" class="player-info">
+                <div class="current-player">Player 1's Turn</div>
+                <div class="action-points">Action Points: 3</div>
+            </div>
 
-    <script src="game-logic.js"></script>
-    <script src="game-ui.js"></script>
-    <script src="main-game.js"></script>
+            <div class="action-buttons">
+                <button id="redeploy-btn" class="btn btn-primary">
+                    🔄 Redeploy Piece
+                </button>
+                <button id="peek-btn" class="btn btn-secondary">
+                    👁️ Peek at Piece
+                </button>
+            </div>
+
+            <div id="identity-buttons" class="identity-buttons" style="display: none;">
+                <button class="btn btn-red">Red Piece</button>
+                <button class="btn btn-green">Green Piece</button>
+                <button class="btn btn-blue">Blue Piece</button>
+            </div>
+
+            <div class="instructions">
+                <h4>How to Play:</h4>
+                <p>• Click to select your pieces</p>
+                <p>• Move to adjacent squares</p>
+                <p>• Reach the opposite corner to win</p>
+                <p>• Use redeploy to change piece identity</p>
+                <p>• Hold peek to see your piece's identity</p>
+            </div>
+        </div>
+
+        <div class="board-container">
+            <div id="game-board" class="board"></div>
+        </div>
+    </div>
+
+    <script>
+        class Piece {
+            constructor(player, identity) {
+                this.player = player;
+                this.identity = identity;
+                this.revealed = false;
+            }
+
+            reveal() {
+                this.revealed = true;
+            }
+
+            hide() {
+                this.revealed = false;
+            }
+        }
+
+        class GameState {
+            constructor() {
+                this.board = Array(8).fill().map(() => Array(8).fill(null));
+                this.currentPlayer = 1;
+                this.actionPoints = 3;
+                this.peekedPiece = null;
+                this.initializeBoard();
+            }
+
+            initializeBoard() {
+                const identities = ['red', 'green', 'blue'];
+                
+                this.shuffleArray(identities);
+                
+                const player1Positions = [[0, 1], [1, 0], [1, 1]];
+                this.shuffleArray(player1Positions);
+                player1Positions.forEach((pos, index) => {
+                    this.board[pos[0]][pos[1]] = new Piece(1, identities[index]);
+                });
+
+                this.shuffleArray(identities);
+                
+                const player2Positions = [[7, 6], [6, 7], [6, 6]];
+                this.shuffleArray(player2Positions);
+                player2Positions.forEach((pos, index) => {
+                    this.board[pos[0]][pos[1]] = new Piece(2, identities[index]);
+                });
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            randomIdentity() {
+                const identities = ['red', 'green', 'blue'];
+                return identities[Math.floor(Math.random() * identities.length)];
+            }
+
+            isValidMove(fromX, fromY, toX, toY) {
+                if (this.actionPoints < 1) return false;
+                if (fromX < 0 || fromX > 7 || fromY < 0 || fromY > 7) return false;
+                if (toX < 0 || toX > 7 || toY < 0 || toY > 7) return false;
+                if (Math.abs(fromX - toX) + Math.abs(fromY - toY) !== 1) return false;
+                if (!this.board[fromY][fromX] || this.board[fromY][fromX].player !== this.currentPlayer) return false;
+                if (this.board[toY][toX] && this.board[toY][toX].player === this.currentPlayer) return false;
+                return true;
+            }
+
+            move(fromX, fromY, toX, toY) {
+                if (!this.isValidMove(fromX, fromY, toX, toY)) return false;
+
+                const movingPiece = this.board[fromY][fromX];
+                const targetPiece = this.board[toY][toX];
+
+                if (targetPiece) {
+                    movingPiece.reveal();
+                    targetPiece.reveal();
+
+                    const attackResult = this.resolveAttack(movingPiece.identity, targetPiece.identity);
+                    
+                    if (attackResult > 0) {
+                        this.board[toY][toX] = movingPiece;
+                        this.board[fromY][fromX] = null;
+                    } else if (attackResult < 0) {
+                        this.board[fromY][fromX] = null;
+                    }
+                } else {
+                    this.board[toY][toX] = movingPiece;
+                    this.board[fromY][fromX] = null;
+                }
+
+                this.actionPoints--;
+                if (this.actionPoints === 0) this.endTurn();
+
+                if ((this.currentPlayer === 1 && toX === 7 && toY === 7) || 
+                    (this.currentPlayer === 2 && toX === 0 && toY === 0)) {
+                    return 'win';
+                }
+
+                return true;
+            }
+
+            resolveAttack(attackerIdentity, defenderIdentity) {
+                if (attackerIdentity === defenderIdentity) return 0;
+                if ((attackerIdentity === 'red' && defenderIdentity === 'green') ||
+                    (attackerIdentity === 'green' && defenderIdentity === 'blue') ||
+                    (attackerIdentity === 'blue' && defenderIdentity === 'red')) {
+                    return 1;
+                }
+                return -1;
+            }
+
+            peek(x, y) {
+                const piece = this.board[y][x];
+                if (piece && piece.player === this.currentPlayer) {
+                    this.peekedPiece = piece;
+                    return true;
+                }
+                return false;
+            }
+
+            endPeek() {
+                this.peekedPiece = null;
+            }
+
+            canRedeploy(x, y) {
+                return this.actionPoints >= 2 && this.board[y][x] && this.board[y][x].player === this.currentPlayer;
+            }
+
+            redeploy(x, y, newIdentity) {
+                if (!this.canRedeploy(x, y)) return false;
+                const piece = this.board[y][x];
+                piece.identity = newIdentity;
+                piece.hide();
+                this.actionPoints -= 2;
+                if (this.actionPoints === 0) this.endTurn();
+                return true;
+            }
+
+            canRespawn() {
+                const homeSquare = this.currentPlayer === 1 ? [0, 0] : [7, 7];
+                return this.actionPoints === 3 && 
+                       !this.board[homeSquare[1]][homeSquare[0]] && 
+                       this.countPlayerPieces(this.currentPlayer) < 3;
+            }
+
+            respawn(identity) {
+                if (!this.canRespawn()) return false;
+                const [x, y] = this.currentPlayer === 1 ? [0, 0] : [7, 7];
+                this.board[y][x] = new Piece(this.currentPlayer, identity);
+                this.actionPoints = 0;
+                this.endTurn();
+                return true;
+            }
+
+            countPlayerPieces(player) {
+                return this.board.flat().filter(piece => piece && piece.player === player).length;
+            }
+
+            endTurn() {
+                this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
+                this.actionPoints = 3;
+            }
+        }
+
+        class GameUI {
+            constructor(gameState, container) {
+                this.gameState = gameState;
+                this.container = container;
+                this.selectedPiece = null;
+                this.redeployMode = false;
+                this.createBoard();
+                this.setupEventListeners();
+                this.updateUI();
+            }
+
+            createBoard() {
+                const board = document.getElementById('game-board');
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        const square = document.createElement('div');
+                        square.className = 'square';
+                        square.dataset.x = x;
+                        square.dataset.y = y;
+                        square.addEventListener('click', () => this.handleSquareClick(x, y));
+                        board.appendChild(square);
+                    }
+                }
+            }
+
+            setupEventListeners() {
+                const redeployBtn = document.getElementById('redeploy-btn');
+                const peekBtn = document.getElementById('peek-btn');
+                const identityButtons = document.querySelectorAll('#identity-buttons button');
+
+                redeployBtn.addEventListener('click', () => this.handleRedeployClick());
+                
+                peekBtn.addEventListener('mousedown', () => this.handlePeekStart());
+                peekBtn.addEventListener('mouseup', () => this.handlePeekEnd());
+                peekBtn.addEventListener('mouseleave', () => this.handlePeekEnd());
+
+                identityButtons.forEach(button => {
+                    const identity = button.textContent.toLowerCase().split(' ')[0];
+                    button.addEventListener('click', () => this.handleIdentityClick(identity));
+                });
+            }
+
+            updateUI() {
+                this.updateBoard();
+                this.updatePlayerInfo();
+                this.updateButtons();
+            }
+
+            updateBoard() {
+                const squares = document.querySelectorAll('.square');
+                squares.forEach(square => {
+                    const x = parseInt(square.dataset.x);
+                    const y = parseInt(square.dataset.y);
+                    const piece = this.gameState.board[y][x];
+
+                    square.textContent = '';
+                    square.className = 'square';
+                    
+                    if (piece) {
+                        square.textContent = piece.player;
+                        square.classList.add(`player${piece.player}`);
+                        if (piece.revealed || piece === this.gameState.peekedPiece) {
+                            square.classList.add(piece.identity);
+                        }
+                    }
+
+                    if (this.selectedPiece) {
+                        const [selectedX, selectedY] = this.selectedPiece;
+                        if (this.gameState.isValidMove(selectedX, selectedY, x, y)) {
+                            square.classList.add('valid-move');
+                        }
+                    }
+                });
+            }
+
+            updatePlayerInfo() {
+                const playerInfo = document.getElementById('player-info');
+                const currentPlayerEl = playerInfo.querySelector('.current-player');
+                const actionPointsEl = playerInfo.querySelector('.action-points');
+                
+                currentPlayerEl.textContent = `Player ${this.gameState.currentPlayer}'s Turn`;
+                actionPointsEl.textContent = `Action Points: ${this.gameState.actionPoints}`;
+                
+                playerInfo.classList.toggle('active', true);
+            }
+
+            updateButtons() {
+                const redeployBtn = document.getElementById('redeploy-btn');
+                const peekBtn = document.getElementById('peek-btn');
+                
+                redeployBtn.disabled = !this.selectedPiece || !this.gameState.canRedeploy(...this.selectedPiece);
+                peekBtn.disabled = !this.selectedPiece;
+            }
+
+            handleSquareClick(x, y) {
+                if (this.selectedPiece) {
+                    const [fromX, fromY] = this.selectedPiece;
+                    const result = this.gameState.move(fromX, fromY, x, y);
+                    if (result === 'win') {
+                        setTimeout(() => {
+                            alert(`🎉 Player ${this.gameState.currentPlayer} wins!`);
+                        }, 100);
+                    }
+                    this.selectedPiece = null;
+                } else if (this.gameState.board[y][x] && this.gameState.board[y][x].player === this.gameState.currentPlayer) {
+                    this.selectedPiece = [x, y];
+                } else if (this.gameState.canRespawn() && 
+                          ((x === 0 && y === 0 && this.gameState.currentPlayer === 1) || 
+                           (x === 7 && y === 7 && this.gameState.currentPlayer === 2))) {
+                    this.showIdentityButtons('respawn');
+                }
+                this.updateUI();
+            }
+
+            handleRedeployClick() {
+                if (this.selectedPiece && this.gameState.canRedeploy(...this.selectedPiece)) {
+                    this.redeployMode = true;
+                    this.showIdentityButtons('redeploy');
+                }
+            }
+
+            handlePeekStart() {
+                if (this.selectedPiece) {
+                    const [x, y] = this.selectedPiece;
+                    if (this.gameState.peek(x, y)) {
+                        this.updateBoard();
+                    }
+                }
+            }
+
+            handlePeekEnd() {
+                this.gameState.endPeek();
+                this.updateBoard();
+            }
+
+            showIdentityButtons(action) {
+                const identityButtons = document.getElementById('identity-buttons');
+                const actionButtons = document.querySelector('.action-buttons');
+                
+                actionButtons.style.display = 'none';
+                identityButtons.style.display = 'flex';
+                
+                this.currentAction = action;
+            }
+
+            handleIdentityClick(identity) {
+                if (this.currentAction === 'redeploy' && this.selectedPiece && this.redeployMode) {
+                    const [x, y] = this.selectedPiece;
+                    if (this.gameState.redeploy(x, y, identity)) {
+                        this.redeployMode = false;
+                        this.selectedPiece = null;
+                    }
+                } else if (this.currentAction === 'respawn') {
+                    this.gameState.respawn(identity);
+                }
+                
+                this.hideIdentityButtons();
+                this.updateUI();
+            }
+
+            hideIdentityButtons() {
+                const identityButtons = document.getElementById('identity-buttons');
+                const actionButtons = document.querySelector('.action-buttons');
+                
+                actionButtons.style.display = 'flex';
+                identityButtons.style.display = 'none';
+                
+                this.currentAction = null;
+            }
+        }
+
+        // Initialize the game
+        const gameState = new GameState();
+        const gameUI = new GameUI(gameState, document.body);
+    </script>
 </body>
 </html>
