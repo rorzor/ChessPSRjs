@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Tower base (shorter) -->
+  <rect x="20" y="35" width="60" height="45" fill="#cccccc" stroke="#555555" stroke-width="2"/>
+  <!-- Battlements -->
+  <!-- Edge left turret (tall) -->
+  <rect x="20" y="25" width="12" height="10" fill="#cccccc" stroke="#555555" stroke-width="2"/>
+  <!-- Mid-left turret (shorter) -->
+  <rect x="34" y="29" width="12" height="6" fill="#cccccc" stroke="#555555" stroke-width="2"/>
+  <!-- Center turret (tall) -->
+  <rect x="48" y="25" width="12" height="10" fill="#cccccc" stroke="#555555" stroke-width="2"/>
+  <!-- Mid-right turret (shorter) -->
+  <rect x="62" y="29" width="12" height="6" fill="#cccccc" stroke="#555555" stroke-width="2"/>
+  <!-- Edge right turret (tall) -->
+  <rect x="76" y="25" width="4" height="10" fill="#cccccc" stroke="#555555" stroke-width="2"/>
+  <!-- Door (adjusted) -->
+  <rect x="45" y="60" width="10" height="20" fill="#999999" stroke="#555555" stroke-width="2"/>
+</svg>

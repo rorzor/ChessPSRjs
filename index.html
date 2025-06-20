@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strategic Board Game</title>
+    <title>Veiled Gambit</title>
     <style>
         * {
             margin: 0;
@@ -157,7 +157,7 @@
         }
 
         .square {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(194, 194, 194, 0.493);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -168,6 +168,7 @@
             transition: all 0.2s ease;
             position: relative;
             backdrop-filter: blur(5px);
+            position: relative; /* needed for ::before positioning */
         }
 
         .square:hover {
@@ -177,12 +178,12 @@
         }
 
         .square.player1 {
-            background: linear-gradient(145deg, #e2e8f0, #cbd5e0);
-            color: #2d3748;
+            background: linear-gradient(145deg, #ffffff, #ccd0d4);
+            color: #333d4f;
         }
 
         .square.player2 {
-            background: linear-gradient(145deg, #a0aec0, #718096);
+            background: linear-gradient(145deg, #121417, #627085);
             color: #1a202c;
         }
 
@@ -196,34 +197,40 @@
             50% { transform: scale(1.08); }
         }
 
-        .square.red::after {
-            content: 'R';
-            position: absolute;
-            top: 2px;
-            right: 4px;
-            font-size: 16px;
-            color: #e53e3e;
-            font-weight: bold;
-        }
-
-        .square.green::after {
-            content: 'G';
-            position: absolute;
-            top: 2px;
-            right: 4px;
-            font-size: 16px;
-            color: #38a169;
-            font-weight: bold;
-        }
-
+        .square.red::after,
+        .square.green::after,
         .square.blue::after {
-            content: 'B';
-            position: absolute;
-            top: 2px;
-            right: 4px;
-            font-size: 16px;
-            color: #3182ce;
-            font-weight: bold;
+        content: '';
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        width: 60%;
+        height: 60%;
+        border-radius: 50%;
+        }
+
+        .square.red::after   { background: #e53e3e; }
+        .square.green::after { background: #38a169; }
+        .square.blue::after  { background: #3182ce; }
+        
+        .square.home::before {
+        content: '';
+        position: absolute;
+        /* Position its top-left corner at the square’s center: */
+        top: 50%;
+        left: 50%;
+        /* Size it however big you like: */
+        width: 75%;
+        height: 75%;
+        /* Pull it back by half its own size: */
+        transform: translate(-50%, -50%);
+        
+        background-image: url('castle.svg');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        pointer-events: none;
+        z-index: 2;
         }
 
         .instructions {
@@ -524,6 +531,8 @@
             }
 
             updateBoard() {
+                const rows = this.gameState.board.length;
+                const cols = this.gameState.board[0].length;
                 const squares = document.querySelectorAll('.square');
                 squares.forEach(square => {
                     const x = parseInt(square.dataset.x);
@@ -533,8 +542,14 @@
                     square.textContent = '';
                     square.className = 'square';
                     
+                    // Workaround for home squares
+                    if ((x === 0 && y === 0) || (x === cols - 1 && y === rows - 1)) {
+                        square.classList.add('home');
+                    }
+
+                    // Add player class
                     if (piece) {
-                        square.textContent = piece.player;
+                        //square.textContent = piece.player;
                         square.classList.add(`player${piece.player}`);
                         if (piece.revealed || piece === this.gameState.peekedPiece) {
                             square.classList.add(piece.identity);
