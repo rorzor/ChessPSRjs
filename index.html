@@ -134,6 +134,11 @@
             color: white;
         }
 
+        .btn-cancel {
+            background: linear-gradient(145deg, #333d44, #7a3e16);
+            color: white;
+        }
+
         .board-container {
             flex: 1;
             display: flex;
@@ -302,9 +307,10 @@
             </div>
 
             <div id="identity-buttons" class="identity-buttons" style="display: none;">
-                <button class="btn btn-red">Red Piece</button>
-                <button class="btn btn-green">Green Piece</button>
-                <button class="btn btn-blue">Blue Piece</button>
+                <button class="btn btn-red identity-choice">Red Piece</button>
+                <button class="btn btn-green identity-choice">Green Piece</button>
+                <button class="btn btn-blue identity-choice">Blue Piece</button>
+                <button id="cancel-identity-btn" class="btn btn-cancel btn-secondary">Cancel</button>
             </div>
 
             <div class="instructions">
@@ -520,7 +526,7 @@
             setupEventListeners() {
                 const redeployBtn = document.getElementById('redeploy-btn');
                 const peekBtn = document.getElementById('peek-btn');
-                const identityButtons = document.querySelectorAll('#identity-buttons button');
+                const identityButtons = document.querySelectorAll('#identity-buttons .identity-choice');
 
                 redeployBtn.addEventListener('click', () => this.handleRedeployClick());
                 
@@ -542,6 +548,13 @@
                 identityButtons.forEach(button => {
                     const identity = button.textContent.toLowerCase().split(' ')[0];
                     button.addEventListener('click', () => this.handleIdentityClick(identity));
+                });
+                const cancelBtn = document.getElementById('cancel-identity-btn');
+                cancelBtn.addEventListener('click', () => {
+                    this.selectedPiece = null;
+                    this.redeployMode = false;
+                    this.hideIdentityButtons();
+                    this.updateUI();
                 });
             }
 
@@ -619,6 +632,7 @@
             }
 
             handleSquareClick(x, y) {
+                if (this.currentAction) return; // prevent interaction while choosing identity
                 if (this.selectedPiece) {
                     const [fromX, fromY] = this.selectedPiece;
                     const result = this.gameState.move(fromX, fromY, x, y);
