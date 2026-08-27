@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { GameState, Piece } = require('../game-state.js');
+const { createMoveAction, applyGameAction, legalActions } = require('../game-action.js');
 
 function withRandomValues(values, callback) {
     const originalRandom = Math.random;
@@ -200,4 +201,35 @@ test('reports victory when Player 1 reaches Player 2 home', () => {
 
     assert.equal(state.move(6, 7, 7, 7), 'win');
     assert.equal(state.board[7][7].player, 1);
+});
+
+test('starts as a non-terminal state without a winner', () => {
+    const state = newState();
+
+    assert.equal(state.isTerminal(), false);
+    assert.equal(state.winner, null);
+});
+
+test('records the winner and becomes terminal after a winning move', () => {
+    const state = emptyState();
+    put(state, 6, 7, 1, 'red');
+    state.actionPoints = 2;
+
+    const result = applyGameAction(state, createMoveAction(6, 7, 7, 7));
+
+    assert.equal(result, 'win');
+    assert.equal(state.isTerminal(), true);
+    assert.equal(state.winner, 1);
+    assert.deepEqual(legalActions(state), []);
+});
+
+test('keeps terminal state and winner queryable after the winning action', () => {
+    const state = emptyState();
+    put(state, 6, 7, 1, 'red');
+    state.actionPoints = 2;
+
+    state.move(6, 7, 7, 7);
+
+    assert.equal(state.isTerminal(), true);
+    assert.equal(state.winner, 1);
 });

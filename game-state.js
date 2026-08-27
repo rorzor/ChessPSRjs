@@ -19,8 +19,13 @@ class GameState {
         this.board = Array(8).fill().map(() => Array(8).fill(null));
         this.currentPlayer = 1;
         this.actionPoints = 3;
+        this.winner = null;
         this.peekingAll = false;
         this.initializeBoard();
+    }
+
+    isTerminal() {
+        return this.winner !== null;
     }
 
     initializeBoard() {
@@ -96,6 +101,7 @@ class GameState {
 
         if ((this.currentPlayer === 1 && this.board[toY][toX].player === 1 && toX === 7 && toY === 7) || 
             (this.currentPlayer === 2 && this.board[toY][toX].player === 2 && toX === 0 && toY === 0)) {
+            this.winner = this.currentPlayer;
             return 'win';
         }
 
