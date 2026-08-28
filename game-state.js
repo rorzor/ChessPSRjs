@@ -75,6 +75,7 @@ class GameState {
 
         const movingPiece = this.board[fromY][fromX];
         const targetPiece = this.board[toY][toX];
+        let attackingPieceRemoved = false;
 
         if (targetPiece) {
             movingPiece.reveal();
@@ -89,6 +90,7 @@ class GameState {
             } else if (attackResult < 0) {
                 // Defender wins
                 this.board[fromY][fromX] = null;
+                attackingPieceRemoved = true;
             }
         } else {
             this.board[toY][toX] = movingPiece;
@@ -97,6 +99,10 @@ class GameState {
 
         this.actionPoints--;
         if (this.actionPoints === 0) this.endTurn();
+        else if (attackingPieceRemoved && this.countPlayerPieces(this.currentPlayer) === 0) {
+            this.actionPoints = 0;
+            this.endTurn();
+        }
         // check for win condition
 
         if ((this.currentPlayer === 1 && this.board[toY][toX].player === 1 && toX === 7 && toY === 7) || 

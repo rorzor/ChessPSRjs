@@ -78,6 +78,29 @@
             gap: 12px;
         }
 
+        .game-setup {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            background: #edf2f7;
+            border-radius: 10px;
+        }
+
+        .game-setup label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .game-setup select {
+            padding: 5px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
+        }
+
         .btn {
             padding: 12px 20px;
             border: none;
@@ -291,6 +314,24 @@
     <div class="game-container">
         <div class="sidebar">
             <h1 class="game-title">Strategic Board Game</h1>
+
+            <div class="game-setup">
+                <label for="player1-controller">Player 1 controller
+                    <select id="player1-controller">
+                        <option value="human">Human</option>
+                        <option value="random">Random</option>
+                        <option value="aggressive">Aggressive</option>
+                    </select>
+                </label>
+                <label for="player2-controller">Player 2 controller
+                    <select id="player2-controller">
+                        <option value="human">Human</option>
+                        <option value="random">Random</option>
+                        <option value="aggressive">Aggressive</option>
+                    </select>
+                </label>
+                <button id="start-game-btn" class="btn btn-primary">Start New Game</button>
+            </div>
             
             <div id="player-info" class="player-info">
                 <div class="current-player">Player 1's Turn</div>
@@ -336,17 +377,43 @@
     </div>
 
     <script src="game-state.js"></script>
+    <script src="game-action.js"></script>
+    <script src="agent.js"></script>
+    <script src="random-agent.js"></script>
+    <script src="aggressive-agent.js"></script>
+    <script src="player-controller.js"></script>
     <script>
 
         class GameUI {
-            constructor(gameState, container) {
+            constructor(gameState, container, controllers = { 1: 'human', 2: 'human' }) {
                 this.gameState = gameState;
                 this.container = container;
                 this.selectedPiece = null;
                 this.redeployMode = false;
+                this.currentAction = null;
+                this.winnerDisplayed = false;
+                this.playerController = new PlayerController(gameState, controllers, {
+                    delay: 500,
+                    onUpdate: () => this.handleControllerUpdate(),
+                });
                 this.createBoard();
                 this.setupEventListeners();
                 this.updateUI();
+                this.playerController.scheduleCpuTurn();
+            }
+
+            resetGame(gameState, controllers) {
+                this.playerController.setControllers(controllers);
+                this.playerController.setGameState(gameState);
+                this.gameState = gameState;
+                this.selectedPiece = null;
+                this.redeployMode = false;
+                this.currentAction = null;
+                this.winnerDisplayed = false;
+                document.getElementById('game-board').innerHTML = '';
+                this.createBoard();
+                this.updateUI();
+                this.playerController.scheduleCpuTurn();
             }
 
             createBoard() {
@@ -402,6 +469,16 @@
                 this.updateBoard();
                 this.updatePlayerInfo();
                 this.updateButtons();
+            }
+
+            handleControllerUpdate() {
+                this.updateUI();
+                if (this.gameState.isTerminal() && !this.winnerDisplayed) {
+                    this.winnerDisplayed = true;
+                    setTimeout(() => {
+                        alert(`🎉 Player ${this.gameState.winner} wins!`);
+                    }, 100);
+                }
             }
 
             updateBoard() {
@@ -467,20 +544,20 @@
                 const redeployBtn = document.getElementById('redeploy-btn');
                 const peekBtn = document.getElementById('peek-btn');
                 
-                redeployBtn.disabled = !this.selectedPiece || !this.gameState.canRedeploy(...this.selectedPiece);
-                //peekBtn.disabled = !this.selectedPiece;
+                const humanTurn = this.playerController.isHumanControlled();
+                redeployBtn.disabled = !humanTurn || this.gameState.isTerminal() ||
+                    !this.selectedPiece || !this.gameState.canRedeploy(...this.selectedPiece);
+                peekBtn.disabled = !humanTurn || this.gameState.isTerminal();
             }
 
             handleSquareClick(x, y) {
-                if (this.currentAction) return; // prevent interaction while choosing identity
+                if (this.currentAction || this.gameState.isTerminal() ||
+                    !this.playerController.isHumanControlled()) return;
                 if (this.selectedPiece) {
                     const [fromX, fromY] = this.selectedPiece;
-                    const result = this.gameState.move(fromX, fromY, x, y);
-                    if (result === 'win') {
-                        setTimeout(() => {
-                            alert(`🎉 Player ${this.gameState.currentPlayer} wins!`);
-                        }, 100);
-                    }
+                    const result = this.playerController.applyHumanAction(
+                        createMoveAction(fromX, fromY, x, y),
+                    );
                     this.selectedPiece = null;
                 } else if (this.gameState.board[y][x] && this.gameState.board[y][x].player === this.gameState.currentPlayer) {
                     this.selectedPiece = [x, y];
@@ -493,7 +570,8 @@
             }
 
             handleRedeployClick() {
-                if (this.selectedPiece && this.gameState.canRedeploy(...this.selectedPiece)) {
+                if (this.playerController.isHumanControlled() && this.selectedPiece &&
+                    this.gameState.canRedeploy(...this.selectedPiece)) {
                     this.redeployMode = true;
                     this.showIdentityButtons('redeploy');
                 }
@@ -526,12 +604,14 @@
             handleIdentityClick(identity) {
                 if (this.currentAction === 'redeploy' && this.selectedPiece && this.redeployMode) {
                     const [x, y] = this.selectedPiece;
-                    if (this.gameState.redeploy(x, y, identity)) {
+                    if (this.playerController.applyHumanAction(
+                        createRedeployAction(x, y, identity),
+                    )) {
                         this.redeployMode = false;
                         this.selectedPiece = null;
                     }
                 } else if (this.currentAction === 'respawn') {
-                    this.gameState.respawn(identity);
+                    this.playerController.applyHumanAction(createRespawnAction(identity));
                 }
                 
                 this.hideIdentityButtons();
@@ -550,8 +630,15 @@
         }
 
         // Initialize the game
-        const gameState = new GameState();
+        let gameState = new GameState();
         const gameUI = new GameUI(gameState, document.body);
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            gameState = new GameState();
+            gameUI.resetGame(gameState, {
+                1: document.getElementById('player1-controller').value,
+                2: document.getElementById('player2-controller').value,
+            });
+        });
     </script>
 </body>
 </html>

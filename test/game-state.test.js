@@ -141,6 +141,46 @@ test('equal-identity combat leaves both pieces in place and reveals them', () =>
     assert.equal(state.actionPoints, 2);
 });
 
+test('ends Player 1 turn when a losing attack removes their last piece', () => {
+    const state = emptyState();
+    put(state, 1, 1, 1, 'red');
+    put(state, 2, 1, 2, 'blue');
+    state.actionPoints = 2;
+
+    assert.equal(state.move(1, 1, 2, 1), true);
+    assert.equal(state.board[1][1], null);
+    assert.equal(state.countPlayerPieces(1), 0);
+    assert.equal(state.currentPlayer, 2);
+    assert.equal(state.actionPoints, 3);
+});
+
+test('ends Player 2 turn when a losing attack removes their last piece', () => {
+    const state = emptyState();
+    state.currentPlayer = 2;
+    put(state, 6, 6, 2, 'red');
+    put(state, 5, 6, 1, 'blue');
+    state.actionPoints = 2;
+
+    assert.equal(state.move(6, 6, 5, 6), true);
+    assert.equal(state.board[6][6], null);
+    assert.equal(state.countPlayerPieces(2), 0);
+    assert.equal(state.currentPlayer, 1);
+    assert.equal(state.actionPoints, 3);
+});
+
+test('does not end the turn early when a losing attack leaves another piece', () => {
+    const state = emptyState();
+    put(state, 1, 1, 1, 'red');
+    put(state, 3, 3, 1, 'green');
+    put(state, 2, 1, 2, 'blue');
+    state.actionPoints = 2;
+
+    assert.equal(state.move(1, 1, 2, 1), true);
+    assert.equal(state.countPlayerPieces(1), 1);
+    assert.equal(state.currentPlayer, 1);
+    assert.equal(state.actionPoints, 1);
+});
+
 test('allows redeployment only for an owned piece with at least 2 AP', () => {
     const state = emptyState();
     put(state, 1, 1, 1, 'red');

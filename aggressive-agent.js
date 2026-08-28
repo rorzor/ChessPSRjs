@@ -1,5 +1,3 @@
-const { Agent } = require('./agent.js');
-
 // Scores are intentionally separated so the heuristic remains interpretable.
 const WINNING_MOVE_SCORE = 100000;
 const ATTACK_SCORE = 1000;
@@ -16,7 +14,9 @@ function distanceToHome(square, home) {
     return Math.abs(square.x - home.x) + Math.abs(square.y - home.y);
 }
 
-class AggressiveHeuristicAgent extends Agent {
+class AggressiveHeuristicAgent extends (typeof module !== 'undefined' && module.exports
+    ? require('./agent.js').Agent
+    : Agent) {
     chooseAction(gameState, legalActions) {
         if (!Array.isArray(legalActions)) {
             throw new TypeError('legalActions must be an array');

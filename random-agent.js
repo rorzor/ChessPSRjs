@@ -1,6 +1,6 @@
-const { Agent } = require('./agent.js');
-
-class RandomAgent extends Agent {
+class RandomAgent extends (typeof module !== 'undefined' && module.exports
+    ? require('./agent.js').Agent
+    : Agent) {
     constructor(random = Math.random) {
         super();
         if (typeof random !== 'function') {
